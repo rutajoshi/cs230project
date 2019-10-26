@@ -42,7 +42,7 @@ pool=None
 BNBA=False
 epochLength=-1
 
-print sys.argv
+print(sys.argv)
 
 for idarg,arg in enumerate(sys.argv):
     if arg=='-bn':
@@ -71,7 +71,7 @@ for idarg,arg in enumerate(sys.argv):
         if optim=="sgd":
             LEARNING_RATE=float(sys.argv[idarg+2])
             optim = SGD(lr=LEARNING_RATE)
-            print "LR " + str(LEARNING_RATE)
+            print("LR " + str(LEARNING_RATE))
 
     elif arg=='-lr':
         LEARNING_RATE=float(sys.argv[idarg+1])
@@ -91,7 +91,7 @@ for idarg,arg in enumerate(sys.argv):
         PATIENCE=int(sys.argv[idarg+1])
 
         
-print optim
+print(optim)
             
 class L2Model:
     ''' Class of forward model'''
@@ -147,7 +147,7 @@ class L2Model:
             elif pool=="avg":
                 self.network.add(GlobalAveragePooling2D())
             else:
-                print "ERROR: pooling not valide"
+                print("ERROR: pooling not valide")
                 exit(-1)
 
 
@@ -196,7 +196,7 @@ class L2Model:
 
             def on_batch_end(self, batch, logs={}):
                 if math.isnan(logs.get('loss')):
-                    print "\nReach a NAN\n"
+                    print("\nReach a NAN\n")
                     sys.exit()
 
         # train the model on the new data for a few epochs
@@ -280,7 +280,7 @@ if __name__ == '__main__':
     #    lambda x:random_zoom(x,[0.95,1.05],row_index=1,col_index=2,channel_index=0)]
 
     (gen_training, N_train), (gen_val, N_val), (gen_test, N_test) = load_data_generator(ROOTPATH, train_txt, test_txt,validation=0.8,subsampling=ssRatio,batch_size=BATCH_SIZE)
-   
+
     l2_Model.fit((gen_training, N_train),(gen_val, N_val))
 
     l2_Model.evaluate((gen_training, N_train),"training", 224)

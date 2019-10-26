@@ -142,7 +142,6 @@ def get_xy_from_file(rootpath, images, processingTarget=None,transform=[],outSiz
         Y=processingTarget(Y)
 
     Y=np.squeeze(np.asarray(Y)).reshape((X.shape[0],len(Y[0])))
-    print(X.shape)
     return (X,Y)
 
 def get_image_for_vgg(imName,transform=[],outSize=(224,224),batch_size=BATCH_SIZE):
