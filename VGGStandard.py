@@ -159,7 +159,7 @@ class L2Model:
         elif BN:
 
             self.network.add(BatchNormalization())
-        self.network.add(Dense(LOW_DIM, activation='linear', trainable=True))
+        self.network.add(Dense(LOW_DIM, activation='sigmoid', trainable=True))
 
         self.network.summary()
         
