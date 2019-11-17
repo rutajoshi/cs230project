@@ -3,3 +3,6 @@ images/
 labels.csv
 __pycache__/
 torch_experiments/
+.DS_Store
+data_split/
+logs/

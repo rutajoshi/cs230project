@@ -23,8 +23,6 @@ from tensorflow.keras.callbacks import TensorBoard
 from datetime import datetime
 from packaging import version
 
-%matplotlib inline
-
 
 # Load labels from csv
 labels = pd.read_csv('labels.csv', float_precision='road_trip')
@@ -122,7 +120,7 @@ test_crops = crop_generator(test_data_gen, Y_test_gen, 855)
 
 # Define the Keras TensorBoard callback
 # Also make log directories based on timestamp
-time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S") # added
+time = datetime.now().strftime("%Y%m%d-%H%M%S") # added
 log_dir = f"logs/{time}" # added
 tensorboard = TensorBoard(log_dir=log_dir, histogram_freq=1)
 
