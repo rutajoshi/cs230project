@@ -36,6 +36,28 @@ TEST_SIZE = int(DATASET_SIZE * .2)
 
 STEPS_PER_EPOCH = np.ceil(TRAIN_SIZE/BATCH_SIZE)
 
+# Preprocessing Functions for One-Hot Labels
+def convert_to_indices(arr, binsPower):
+    arr = np.around(arr, decimals=binsPower)
+    arr = np.multiply(arr, 10**(binsPower))
+    return arr.astype(int)
+
+def onehot_initialization(a, binsPower):
+    ncols = 10 **(binsPower) + 1
+    out = np.zeros(a.shape + (ncols,), dtype=int)
+    out[all_idx(a, axis=2)] = 1
+    return out
+
+def all_idx(idx, axis):
+    grid = np.ogrid[tuple(map(slice, idx.shape))]
+    grid.insert(axis, idx)
+    return tuple(grid)
+
+def convert_onehot(arr, binPower):
+    arr = convert_to_indices(arr, binPower)
+    arr = onehot_initialization(arr, binPower)
+    return arr
+
 # first 4000 images
 labels = pd.read_csv('labels.csv', float_precision='road_trip')
 labels["base color R"] = labels["base color R"].str[1:]
@@ -61,6 +83,9 @@ frames = [vector_values, vector_values2]
 vector_value = pd.concat(frames)
 np_labels = vector_value.values
 
+# Convert labels to one-hot vector representation
+np_labels = convert_onehot(np_labels, 2)
+
 # threadsafe generator wrapper
 class thread_safe_generator(object):
     def __init__(self, gen):
@@ -71,8 +96,7 @@ class thread_safe_generator(object):
         with self.lock:
             return next(self.gen)
 
-# START: generator helper functions
-
+#### START: generator helper functions
 # Crop the input image to a bounding box and resize to fit VGG16 input size
 def crop(img):
     # Note: image_data_format is 'channel_last'
@@ -121,7 +145,7 @@ def crop_generator(batches, labels, crop_length, batch_size, steps):
 image_generator = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
 
 
-# END: generator helper functions
+#### END: generator helper functions
 
 # Creating image generators for each dataset (65/15/20 percent split)
 # The flow_from_directory function returns a generator that streams images from target directories
@@ -174,7 +198,7 @@ for layer in initial_model.layers:
 # Version 1 - this flattens the output and passes into a dense 10 layer output
 preds = layers.Flatten()(initial_model.output)
 preds.set_shape((None, 25088))
-preds = layers.Dense(10, activation='sigmoid', input_shape=(None, 25088), trainable=True)(preds)
+preds = layers.Dense(1010, activation='sigmoid', input_shape=(None, 25088), trainable=True)(preds)
 
 # Version 2 - this passes the output into:
 # a conv layer, tanh activation, spatial dropout, flattens, and into a dense layer
