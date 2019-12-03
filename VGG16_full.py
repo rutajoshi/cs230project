@@ -17,12 +17,12 @@ import pandas as pd
 import imageio
 from tensorflow import keras
 from keras.models import Sequential
-from tensorflow.keras import layers
+from tensorflow.python.keras.layers import Input, Dense, Flatten, Conv2D, Activation, SpatialDropout2D
 
 from datetime import datetime
 from packaging import version
-from tensorflow.keras.callbacks import TensorBoard
-from tensorflow.keras.applications.vgg16 import VGG16
+from tensorflow.python.keras.callbacks import TensorBoard
+from tensorflow.python.keras.applications.vgg16 import VGG16
 
 # constants
 BATCH_SIZE = 25
@@ -172,28 +172,28 @@ for layer in initial_model.layers:
 # ARCHITECTURE CHANGES ARE HERE
 
 # Version 1 - this flattens the output and passes into a dense 10 layer output
-preds = layers.Flatten()(initial_model.output)
+preds = Flatten()(initial_model.output)
 preds.set_shape((None, 25088))
-preds = layers.Dense(10, activation='sigmoid', input_shape=(None, 25088), trainable=True)(preds)
+preds = Dense(10, activation='sigmoid', input_shape=(None, 25088), trainable=True)(preds)
 
 # Version 2 - this passes the output into:
 # a conv layer, tanh activation, spatial dropout, flattens, and into a dense layer
-# preds = layers.Conv2D(30, 5, strides=(1, 1), padding='valid', data_format='channels_last') (initial_model.output)
-# preds = layers.Activation('tanh')(preds)
-# preds = layers.SpatialDropout2D(0.4)(preds)
-# preds = layers.Flatten()(preds)
+# preds = Conv2D(30, 5, strides=(1, 1), padding='valid', data_format='channels_last') (initial_model.output)
+# preds = Activation('tanh')(preds)
+# preds = SpatialDropout2D(0.4)(preds)
+# preds = Flatten()(preds)
 # preds.set_shape((None, 1470))
-# preds = layers.Dense(10, activation='sigmoid', input_shape=(None, 1470), trainable=True)(preds)
+# preds = Dense(10, activation='sigmoid', input_shape=(None, 1470), trainable=True)(preds)
 
 # Version 3 - this passes the output into:
 # a conv layer, tanh activation, another conv layer, spatial dropout, flattens, and into a dense layer
-# preds = layers.Conv2D(30, 5, strides=(1, 1), padding='valid', data_format='channels_last') (initial_model.output)
-# preds = layers.Activation('tanh')(preds)
-# preds = layers.Conv2D(16, 3, strides=(1, 1), padding='valid', data_format='channels_last') (preds)
-# preds = layers.SpatialDropout2D(0.4)(preds)
-# preds = layers.Flatten()(preds)
+# preds = Conv2D(30, 5, strides=(1, 1), padding='valid', data_format='channels_last') (initial_model.output)
+# preds = Activation('tanh')(preds)
+# preds = Conv2D(16, 3, strides=(1, 1), padding='valid', data_format='channels_last') (preds)
+# preds = SpatialDropout2D(0.4)(preds)
+# preds = Flatten()(preds)
 # preds.set_shape((None, 1296))
-# preds = layers.Dense(10, activation='sigmoid', input_shape=(None, 1296), trainable=True)(preds)
+# preds = Dense(10, activation='sigmoid', input_shape=(None, 1296), trainable=True)(preds)
 
 
 # Initialize and compile keras model
