@@ -17,12 +17,13 @@ import pandas as pd
 import imageio
 from tensorflow import keras
 from keras.models import Sequential
-from tensorflow.keras import layers
+from keras import layers
 
 from datetime import datetime
 from packaging import version
-from tensorflow.keras.callbacks import TensorBoard
-from tensorflow.keras.applications.vgg16 import VGG16
+from keras.callbacks import TensorBoard
+from keras.applications.vgg16 import VGG16
+from keras import backend as K
 
 # constants
 BATCH_SIZE = 25
@@ -150,11 +151,11 @@ test_crops = crop_generator(test_data_gen, Y_test_gen, 855, BATCH_SIZE, int(2000
 
 # Define the Keras TensorBoard callback.
 time = datetime.now().strftime("%Y%m%d-%H%M%S")
-logdir = f"logs/{time}"
+logdir = "logs/{time}"
 tensorboard = keras.callbacks.TensorBoard(log_dir=logdir, histogram_freq=1)
 
 # Defining VGG16 model
-initial_model = VGG16(weights='imagenet', include_top=False)
+initial_model = VGG16(weights='imagenet', include_top=False, input_shape=(3, 224, 224))
 
 for layer in initial_model.layers:
     layer.trainable = False
