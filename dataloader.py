@@ -38,7 +38,7 @@ class DataLoader:
         return vector_value.values
     
     def __crop__(self, img):
-        return img[c.Y:(c.Y+c.CROP_SIZE), c.X:(c.X + c.CROP_SIZE), :]
+        return img[c.Y_TOP:(c.Y_TOP+c.CROP_SIZE), c.X_LEFT:(c.X_LEFT + c.CROP_SIZE), :]
 
     def __label_gen__(self, labels):
         num = 0
