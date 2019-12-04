@@ -2,33 +2,16 @@ import math
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import constants as c
 from tensorflow import keras
 
 class DataLoader:
-    # constants
-    BATCH_SIZE = 25
-    IMG_HEIGHT = 855
-    IMG_WIDTH = 1280
-
-    DATASET_SIZE = 10000
-    TRAIN_SIZE = 6500
-    VAL_SIZE = 1500
-    TEST_SIZE = 2000
-    
-    # cropping
-    X_LEFT = 144
-    Y_TOP = 59
-    CROP_SIZE = 224
-    
-    # bins
-    BIN_POWER = 3
-    N_BINS = 1000
     
     # private 
     def __init__(self):
         self.image_generator = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
     
-    def __get_labels__():
+    def __get_labels__(self):
         # first 4000 images
         labels = pd.read_csv('labels.csv', float_precision='road_trip')
         labels["base color R"] = labels["base color R"].str[1:]
@@ -54,63 +37,64 @@ class DataLoader:
         vector_value = pd.concat(frames)
         return vector_value.values
     
-    def __crop__(img):
-        return img[Y:(Y+CROP_SIZE), X:(X + CROP_SIZE), :]
+    def __crop__(self, img):
+        return img[c.Y:(c.Y+c.CROP_SIZE), c.X:(c.X + c.CROP_SIZE), :]
 
-    def __label_gen__(labels):
+    def __label_gen__(self, labels):
         num = 0
         while True:
-            yield labels[num: num + BATCH_SIZE, :]
-            num += BATCH_SIZE
+            yield labels[num: num + c.BATCH_SIZE, :]
+            num += c.BATCH_SIZE
             if (num >= len(labels)):
                 num = 0
 
-    def __crop_gen__(batches, labels):
+    def __crop_gen__(self, batches, labels):
         while True:
             batch_x = next(batches)
-            batch_crops = np.zeros((BATCH_SIZE, 224, 224, 3))
-            for i in range(BATCH_SIZE):
-                batch_crops[i] = crop(batch_x[0][i])
+            batch_crops = np.zeros((c.BATCH_SIZE, 224, 224, 3))
+            for i in range(c.BATCH_SIZE):
+                batch_crops[i] = self.__crop__(batch_x[0][i])
             yield (batch_crops, next(labels))  
             
-    def __create_gen__(path, labels):
+    def __create_gen__(self, path, labels):
         data_gen = self.image_generator.flow_from_directory(directory=str(path),
-                                                     target_size=(int(IMG_HEIGHT * .4), int(IMG_WIDTH * .4)),
-                                                     batch_size=BATCH_SIZE,
+                                                     target_size=(int(c.IMG_HEIGHT * .4), int(c.IMG_WIDTH * .4)),
+                                                     batch_size=c.BATCH_SIZE,
                                                      shuffle = False,
                                                      classes = None)
-        Y_gen = label_gen(labels)
-        return crop_gen(data_gen, Y_gen)
+        Y_gen = self.__label_gen__(labels)
+        return self.__crop_gen__(data_gen, Y_gen)
     
     # bins one hot preprocess
-    def __convert_to_indices__(arr, binsPower):
+    def __convert_to_indices__(self, arr, binsPower):
         arr = np.around(arr, decimals=binsPower)
         arr = np.multiply(arr, 10**(binsPower))
         return arr.astype(int)
 
-    def __onehot_initialization__(a, binsPower):
+    def __onehot_initialization__(self, a, binsPower):
         ncols = 10 **(binsPower) + 1
         out = np.zeros(a.shape + (ncols,), dtype=int)
-        out[all_idx(a, axis=2)] = 1
+        out[self.__all_idx__(a, axis=2)] = 1
         return out
 
-    def __all_idx__(idx, axis):
+    def __all_idx__(self, idx, axis):
         grid = np.ogrid[tuple(map(slice, idx.shape))]
         grid.insert(axis, idx)
         return tuple(grid)
 
-    def __convert_onehot__(arr, binPower):
-        arr = convertToIndices(arr, binPower)
-        arr = onehot_initialization(arr, binPower)
+    def __convert_onehot__(self, arr, binPower):
+        arr = self.__convert_to_indices__(arr, binPower)
+        arr = self.__onehot_initialization__(arr, binPower)
         return arr
     
     # public
-    def load_data(bins = False):
-        labels = __get_labels__()
+    def load_data(self, bins = False):
+        labels = self.__get_labels__()
         if (bins):
-            labels = convert_onehot(np_labels, BIN_POWER)
-        train_gen = __create_gen__("./data_split/train_data", labels[:TRAIN_SIZE])
-        val_gen = __create_gen__("./data_split/val_data", labels[TRAIN_SIZE:TRAIN_SIZE + VAL_SIZE])
-        test_gen = __create_gen__("./data_split/test_data", np_labels[TRAIN_SIZE + VAL_SIZE:])
+            labels = self.__convert_onehot__(labels, c.BIN_POWER)
+        train_gen = self.__create_gen__("./data_split/train_data", labels[:c.TRAIN_SIZE])
+        val_gen = self.__create_gen__("./data_split/val_data", labels[c.TRAIN_SIZE:c.TRAIN_SIZE + c.VAL_SIZE])
+        test_gen = self.__create_gen__("./data_split/test_data", labels[c.TRAIN_SIZE + c.VAL_SIZE:])
         return train_gen, val_gen, test_gen
+    
     

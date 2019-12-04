@@ -144,7 +144,7 @@ STEP_SIZE_VALID=int(1500/BATCH_SIZE)
 time = datetime.now().strftime("%Y%m%d-%H%M%S")
 logdir = f"logs/{time}"
 es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=50)
-mc = ModelCheckpoint('vgg16_best_model.h5', monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
+mc = ModelCheckpoint('vgg16_best_model.h5', monitor='val_loss', verbose=1, save_best_only=True)
 tensorboard = keras.callbacks.TensorBoard(log_dir=logdir, histogram_freq=1)
 
 # fit generator
