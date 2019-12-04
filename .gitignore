@@ -6,3 +6,4 @@ torch_experiments/
 .DS_Store
 data_split/
 logs/
+data_split_large/
