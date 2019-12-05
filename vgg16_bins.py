@@ -1,11 +1,20 @@
 from dataloader import DataLoader
 from models import Models
 
+import constants as c
+import pandas as pd
+from datetime import datetime
+from packaging import version
+from tensorflow import keras
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import TensorBoard
+
 train_crops, val_crops, test_crops = DataLoader().load_data(bins = True)
 model = Models().bins_vgg16()
 
-STEP_SIZE_TRAIN=int(6500/BATCH_SIZE)
-STEP_SIZE_VALID=int(1500/BATCH_SIZE)
+STEP_SIZE_TRAIN=int(6500/c.BATCH_SIZE)
+STEP_SIZE_VALID=int(1500/c.BATCH_SIZE)
 
 # Callback functions
 # Define the Keras TensorBoard callback.

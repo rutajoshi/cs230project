@@ -14,6 +14,7 @@ from PIL import Image
 from scipy import ndimage
 import pandas as pd
 import imageio
+import ordinal_categorical_crossentropy as OCC
 
 import constants as c
 
@@ -41,8 +42,9 @@ class Models():
     def bins_mean_squared_error(self):
         # Create a loss function that adds the MSE loss to the mean of all squared activations of a specific layer
         def loss(y_true, y_pred):
-            yt = tf.argmax(y_true, axis=-1) * 10**(-c.N_BINS)
-            yp = tf.argmax(y_pred, axis=-1) * 10**(-c.N_BINS)
+            yt = tf.math.scalar_mul(10.**(-c.BIN_POWER), tf.cast(tf.argmax(y_true, axis=-1), tf.float32))
+            yp = tf.math.scalar_mul(10.**(-c.BIN_POWER), tf.cast(tf.argmax(y_pred, axis=-1), tf.float32))
+
             return tf.keras.losses.MSE(yt, yp)  
         # Return a function
         return loss
@@ -100,17 +102,16 @@ class Models():
             preds = layers.Flatten()(initial_model.output)
             preds.set_shape((None, 25088))
 
-            x1 = layers.Dense(c.N_BINS, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
-            x2 = layers.Dense(c.N_BINS, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
-            x3 = layers.Dense(c.N_BINS, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
-            x4 = layers.Dense(c.N_BINS, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
-            x5 = layers.Dense(c.N_BINS, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
-            x6 = layers.Dense(c.N_BINS, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
-            x7 = layers.Dense(c.N_BINS, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
-            x8 = layers.Dense(c.N_BINS, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
-            x9 = layers.Dense(c.N_BINS, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
-            x10 = layers.Dense(c.N_BINS, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
-            preds = layers.Concatenate(axis = 1)([x1, x2, x3, x4, x5, x6, x7, x8, x9, x10])
+            x1 = layers.Dense(c.N_BINS + 1, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
+            x2 = layers.Dense(c.N_BINS + 1, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
+            x3 = layers.Dense(c.N_BINS + 1, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
+            x4 = layers.Dense(c.N_BINS + 1, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
+            x5 = layers.Dense(c.N_BINS + 1, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
+            x6 = layers.Dense(c.N_BINS + 1, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
+            x7 = layers.Dense(c.N_BINS + 1, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
+            x8 = layers.Dense(c.N_BINS + 1, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
+            x9 = layers.Dense(c.N_BINS + 1, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
+            x10 = layers.Dense(c.N_BINS + 1, activation='softmax', input_shape=(None, 25088), trainable=True)(preds)
             
 #         elif (opt == 2):
 #             preds = Conv2D(30, 5, strides=(1, 1), padding='valid', data_format='channels_last') (initial_model.output)
@@ -125,13 +126,13 @@ class Models():
 #             preds = SpatialDropout2D(0.4)(preds)
 #             preds = Flatten()(preds)
 #             preds.set_shape((None, 1296))
-        model = keras.Model(initial_model.input, preds)
+        model = keras.Model(initial_model.input, [x1, x2, x3, x4, x5, x6, x7, x8, x9, x10])
         # Compile the model
         
         if (loss == 1):
             model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
         else:
-            model.compile(loss=self.bins_mean_squared_error(), optimizer='adam', metrics=['accuracy'])
+            model.compile(loss=OCC.loss, optimizer='adam', metrics=['accuracy'])
 
         return model
             

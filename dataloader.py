@@ -38,12 +38,18 @@ class DataLoader:
         return vector_value.values
     
     def __crop__(self, img):
-        return img[c.Y:(c.Y+c.CROP_SIZE), c.X:(c.X + c.CROP_SIZE), :]
+        return img[c.Y_TOP:(c.Y_TOP+c.CROP_SIZE), c.X_LEFT:(c.X_LEFT + c.CROP_SIZE), :]
 
-    def __label_gen__(self, labels):
+    def __label_gen__(self, labels, bins = False):
         num = 0
         while True:
-            yield labels[num: num + c.BATCH_SIZE, :]
+            if (bins):
+                l = []
+                for i in range(10):
+                    l.append(labels[i][num : num + c.BATCH_SIZE])
+                yield l
+            else:
+                yield labels[num: num + c.BATCH_SIZE, :]
             num += c.BATCH_SIZE
             if (num >= len(labels)):
                 num = 0
@@ -56,13 +62,13 @@ class DataLoader:
                 batch_crops[i] = self.__crop__(batch_x[0][i])
             yield (batch_crops, next(labels))  
             
-    def __create_gen__(self, path, labels):
+    def __create_gen__(self, path, labels, bins = False):
         data_gen = self.image_generator.flow_from_directory(directory=str(path),
                                                      target_size=(int(c.IMG_HEIGHT * .4), int(c.IMG_WIDTH * .4)),
                                                      batch_size=c.BATCH_SIZE,
                                                      shuffle = False,
                                                      classes = None)
-        Y_gen = self.__label_gen__(labels)
+        Y_gen = self.__label_gen__(labels, bins)
         return self.__crop_gen__(data_gen, Y_gen)
     
     # bins one hot preprocess
@@ -83,18 +89,22 @@ class DataLoader:
         return tuple(grid)
 
     def __convert_onehot__(self, arr, binPower):
-        arr = self.__convert_to_indices__(arr, binPower)
-        arr = self.__onehot_initialization__(arr, binPower)
-        return arr
+        # split into 10 and then convert to indices
+        l = []
+        for i in range(10):   
+            tmp = self.__convert_to_indices__(arr[:,i], binPower)
+            tmp = self.__onehot_initialization__(tmp, binPower)
+            l.append(tmp)
+        return l
     
     # public
     def load_data(self, bins = False):
         labels = self.__get_labels__()
         if (bins):
             labels = self.__convert_onehot__(labels, c.BIN_POWER)
-        train_gen = self.__create_gen__("./data_split/train_data", labels[:c.TRAIN_SIZE])
-        val_gen = self.__create_gen__("./data_split/val_data", labels[c.TRAIN_SIZE:c.TRAIN_SIZE + c.VAL_SIZE])
-        test_gen = self.__create_gen__("./data_split/test_data", labels[c.TRAIN_SIZE + c.VAL_SIZE:])
+        train_gen = self.__create_gen__("./data_split/train_data", labels[:c.TRAIN_SIZE], bins)
+        val_gen = self.__create_gen__("./data_split/val_data", labels[c.TRAIN_SIZE:c.TRAIN_SIZE + c.VAL_SIZE], bins)
+        test_gen = self.__create_gen__("./data_split/test_data", labels[c.TRAIN_SIZE + c.VAL_SIZE:], bins)
         return train_gen, val_gen, test_gen
     
     
