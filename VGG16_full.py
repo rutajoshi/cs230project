@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from threading import Lock, Thread
 
 import math
 import numpy as np
@@ -15,14 +14,19 @@ from PIL import Image
 from scipy import ndimage
 import pandas as pd
 import imageio
+
+# tensorflow stuff
 from tensorflow import keras
-from keras.models import Sequential
-from tensorflow.python.keras.layers import Input, Dense, Flatten, Conv2D, Activation, SpatialDropout2D
+from tensorflow.keras.models import Sequential
+from tensorflow.keras import layers
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.applications.vgg16 import VGG16
+from tensorflow.keras import backend as K
 
 from datetime import datetime
 from packaging import version
-from tensorflow.python.keras.callbacks import TensorBoard
-from tensorflow.python.keras.applications.vgg16 import VGG16
 
 # constants
 BATCH_SIZE = 25
@@ -61,53 +65,44 @@ frames = [vector_values, vector_values2]
 vector_value = pd.concat(frames)
 np_labels = vector_value.values
 
-# threadsafe generator wrapper
-class thread_safe_generator(object):
-    def __init__(self, gen):
-        self.gen = gen
-        self.lock = Lock()
-
-    def next(self):
-        with self.lock:
-            return next(self.gen)
-
 # START: generator helper functions
 
 # Crop the input image to a bounding box and resize to fit VGG16 input size
 def crop(img):
     # Note: image_data_format is 'channel_last'
-    x = 212
-    y = 0
-    crop_size = 855
-    new_img = tf.image.crop_to_bounding_box(img, 0, 212, crop_size, crop_size)
-    return tf.image.resize(new_img, [224, 224])
+    x = 144
+    y = 59
+    crop_size = 224
+    return img[y:(y+crop_size), x:(x + crop_size), :]
 
 # Generator function that is used to stream labels to keras
 def label_gen(labels, batch_size):
     num = 0
     while True:
+        yield labels[num: num + BATCH_SIZE, :]
+        num += batch_size
         if (num >= len(labels)):
             num = 0
-        if (num == 0 and num + batch_size >= len(labels)):
-            yield labels;
-        else:
-            yield labels[num: num + batch_size, :]
-        num += batch_size
 
+<<<<<<< HEAD
+def crop_gen(batches, labels):
+=======
 # Generator function that is used to stream cropped batches and their labels to keras
 # It takes in two generator functions: "batches" and "labels" which are queried for
 # the next available batch of images and labels
 def crop_generator(batches, labels, crop_length, batch_size, steps):
     i = 0
     lock = Lock()
+>>>>>>> master
     while True:
-        batch_x = batches[i]
-        labels_x = next(labels)
-        start_y = (855 - crop_length) // 2
-        start_x = (1280 - crop_length) // 2
-        batch_crops = np.zeros((batch_size, 224, 224, 3))
-        for i in range(batch_crops.shape[0]):
+        batch_x = next(batches)
+        batch_crops = np.zeros((BATCH_SIZE, 224, 224, 3))
+        for i in range(BATCH_SIZE):
             batch_crops[i] = crop(batch_x[0][i])
+<<<<<<< HEAD
+        yield (batch_crops, next(labels))    
+        
+=======
         assert(labels_x.shape[0] == batch_crops.shape[0], "labels size = " + str(labels_x.shape[0]))
         yield (batch_crops, labels_x)
 
@@ -121,24 +116,25 @@ def crop_generator(batches, labels, crop_length, batch_size, steps):
 image_generator = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
 
 
+>>>>>>> master
 # END: generator helper functions
 
 # Creating image generators for each dataset (65/15/20 percent split)
 # The flow_from_directory function returns a generator that streams images from target directories
 image_generator = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
 
-train_data_gen = image_generator.flow_from_directory(directory=str("./data_split_large/train_data"),
-                                                     target_size=(IMG_HEIGHT, IMG_WIDTH),
+train_data_gen = image_generator.flow_from_directory(directory=str("./data_split/train_data"),
+                                                     target_size=(int(IMG_HEIGHT * .4), int(IMG_WIDTH * .4)),
                                                      batch_size=BATCH_SIZE,
                                                      shuffle = False,
                                                      classes = None)
-val_data_gen = image_generator.flow_from_directory(directory=str("./data_split_large/val_data"),
-                                                     target_size=(IMG_HEIGHT, IMG_WIDTH),
+val_data_gen = image_generator.flow_from_directory(directory=str("./data_split/val_data"),
+                                                     target_size=(int(IMG_HEIGHT * .4), int(IMG_WIDTH * .4)),
                                                      batch_size=BATCH_SIZE,
                                                      shuffle = False,
                                                      classes = None)
-test_data_gen = image_generator.flow_from_directory(directory=str("./data_split_large/test_data"),
-                                                     target_size=(IMG_HEIGHT, IMG_WIDTH),
+test_data_gen = image_generator.flow_from_directory(directory=str("./data_split/test_data"),
+                                                     target_size=(int(IMG_HEIGHT * .4), int(IMG_WIDTH * .4)),
                                                      batch_size=BATCH_SIZE,
                                                      classes = None)
 
@@ -151,6 +147,11 @@ Y_train_gen = label_gen(Y_train, BATCH_SIZE)
 Y_val_gen = label_gen(Y_val, BATCH_SIZE)
 Y_test_gen = label_gen(Y_test, BATCH_SIZE)
 
+<<<<<<< HEAD
+train_crops = crop_gen(train_data_gen, Y_train_gen)
+val_crops = crop_gen(val_data_gen, Y_val_gen)
+test_crops = crop_gen(test_data_gen, Y_test_gen)
+=======
 # Create the train data and test data batch/label pair generators using the
 # corresponding generators for images streamed from a directory
 train_crops = crop_generator(train_data_gen, Y_train_gen, 855, BATCH_SIZE, int(6500/BATCH_SIZE))
@@ -162,6 +163,7 @@ test_crops = crop_generator(test_data_gen, Y_test_gen, 855, BATCH_SIZE, int(2000
 time = datetime.now().strftime("%Y%m%d-%H%M%S")
 logdir = f"logs/{time}"
 tensorboard = keras.callbacks.TensorBoard(log_dir=logdir, histogram_freq=1)
+>>>>>>> master
 
 # Get the pretrained VGG model. We set include_top to False to specify that we don't want the classification layers
 initial_model = VGG16(weights='imagenet', include_top=False)
@@ -205,17 +207,34 @@ model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
 STEP_SIZE_TRAIN=int(6500/BATCH_SIZE)
 STEP_SIZE_VALID=int(1500/BATCH_SIZE)
 
+<<<<<<< HEAD
+# Callback functions
+# Define the Keras TensorBoard callback.
+time = datetime.now().strftime("%Y%m%d-%H%M%S")
+logdir = f"logs/{time}"
+es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=50)
+mc = ModelCheckpoint('vgg16_best_model.h5', monitor='val_loss', verbose=1, save_best_only=True)
+tensorboard = keras.callbacks.TensorBoard(log_dir=logdir, histogram_freq=1)
+
+# fit generator
+=======
 # Fit the model to the training data and validate on the validation data
+>>>>>>> master
 model.fit_generator(generator=train_crops,
                     steps_per_epoch=STEP_SIZE_TRAIN,
                     validation_data=val_crops,
                     validation_steps= STEP_SIZE_VALID,
-                    epochs=10,
+                    epochs=10000,
                     verbose=True,
                     use_multiprocessing = False,
+<<<<<<< HEAD
+                    max_queue_size=10, 
+                    callbacks=[es, mc, tensorboard]
+=======
                     max_queue_size=10,
                     workers=1,
                     callbacks=[tensorboard]
+>>>>>>> master
 )
 
 STEP_SIZE_TEST=int(2000/BATCH_SIZE)
@@ -224,6 +243,9 @@ STEP_SIZE_TEST=int(2000/BATCH_SIZE)
 loss, acc = model.evaluate_generator(generator = test_crops, steps = STEP_SIZE_TEST, max_queue_size = 10, workers = 1, callbacks = [])
 print("Restored model, accuracy: {:5.2f}%".format(100*acc))
 print("Restored model, loss: {:5.2f}".format(loss))
+<<<<<<< HEAD
+=======
 
 # Save the weights in a checkpoint
 model.save_weights('./checkpoints/{time}')
+>>>>>>> master
