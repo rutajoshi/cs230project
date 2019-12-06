@@ -6,7 +6,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import TensorBoard
 
-train_crops, val_crops, test_crops = DataLoader().load_data(bins = True)
+train_crops, val_crops, test_crops = DataLoader().load_data(bins = False)
 model = Models().resnet50_v1()
 
 STEP_SIZE_TRAIN=int(6500/c.BATCH_SIZE)

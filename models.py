@@ -140,19 +140,19 @@ class Models():
     # Added layers equivalent to vgg_v2
     def resnet50_v1(self):
         # Get the pretrained ResNet50 model. We set include_top to False to specify that we don't want the classification layers
-        initial_model = ResNet50(weights='imagenet', include_top=False)
+        initial_model = ResNet50(weights='imagenet', include_top=False, input_tensor=layers.Input(shape=(224,224,3)))
         
         # Set all existing ResNet layers to be untrainable (freeze weights)
         for layer in initial_model.layers:
             layer.trainable = False
 
-        x = initial_model.output
-        preds = layers.Conv2D(30, 5, strides=(10, 10), padding='valid', data_format='channels_last') (x)
+        preds = initial_model.output
+        preds = layers.Conv2D(30, 5, strides=(1, 1), padding='valid', data_format='channels_last') (preds)
         preds = layers.Activation('tanh')(preds)
         preds = layers.SpatialDropout2D(0.4)(preds)
         preds = layers.Flatten()(preds)
-        preds.set_shape((None, 25))
-        preds = layers.Dense(10, activation='sigmoid', input_shape=(None, 25), trainable=True)(preds)
+        preds.set_shape((None, 270))
+        preds = layers.Dense(10, activation='sigmoid', trainable=True)(preds)
 
         model = keras.Model(initial_model.input, preds)
         model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
