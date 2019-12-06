@@ -9,3 +9,4 @@ logs/
 cuda/
 cuda_8.0.61_375.26_linux.run
 cudnn-8.0-linux-x64-v6.0.tgz
+data_split_large/
