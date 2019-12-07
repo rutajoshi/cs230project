@@ -152,7 +152,8 @@ class Models():
  
         model = keras.Model(initial_model.input, preds)
         print(model.summary())
-        model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
+	opt = keras.optimizers.Adam(learning_rate=0.01, beta_1=0.9, beta_2=0.999, amsgrad=False)
+        model.compile(loss='mean_squared_error', optimizer=opt, metrics=['mae'])
         return model
 
  
@@ -175,5 +176,6 @@ class Models():
         preds = layers.Dense(10, activation='sigmoid', trainable=True)(preds)
 
         model = keras.Model(initial_model.input, preds)
-        model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
+	opt = keras.optimizers.Adam(learning_rate=0.01, beta_1=0.9, beta_2=0.999, amsgrad=False)
+        model.compile(loss='mean_squared_error', optimizer=opt, metrics=['mae'])
         return model 
