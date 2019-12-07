@@ -135,10 +135,30 @@ class Models():
             model.compile(loss=self.bins_mean_squared_error(), optimizer='adam', metrics=['accuracy'])
 
         return model
-            
+           
+    # Added layers equivalent to vgg_v1
+    def resnet50_v1(self):
+        # Get the pretrained ResNet50 model. We set include_top to False to specify that we don't want the classification layers
+        initial_model = ResNet50(weights='imagenet', include_top=False, input_tensor=layers.Input(shape=(224,224,3)))
+ 
+        # Set all existing ResNet layers to be untrainable (freeze weights)
+        for layer in initial_model.layers:
+            layer.trainable = False
+ 
+        preds = initial_model.output
+        preds = layers.Flatten()(preds)
+        preds.set_shape((None, 100352))
+        preds = layers.Dense(10, activation='sigmoid', trainable=True)(preds)
+ 
+        model = keras.Model(initial_model.input, preds)
+        print(model.summary())
+        model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
+        return model
+
+ 
     # NOTE: fixed added layers
     # Added layers equivalent to vgg_v2
-    def resnet50_v1(self):
+    def resnet50_v2(self):
         # Get the pretrained ResNet50 model. We set include_top to False to specify that we don't want the classification layers
         initial_model = ResNet50(weights='imagenet', include_top=False, input_tensor=layers.Input(shape=(224,224,3)))
         
