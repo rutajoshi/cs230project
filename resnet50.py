@@ -35,6 +35,6 @@ model.fit_generator(generator=train_crops,
 STEP_SIZE_TEST=int(2000/c.BATCH_SIZE)
 
 # Re-evaluate the model
-loss, acc = model.evaluate_generator(generator = test_crops, steps = STEP_SIZE_TEST, max_queue_size = 10, workers = 1, callbacks = [])
+loss, mae = model.evaluate_generator(generator = test_crops, steps = STEP_SIZE_TEST, max_queue_size = 10, workers = 1, callbacks = [])
 print("Restored model, loss: {:5.2f}".format(loss))
-print("Restored model, accuracy: {:5.2f}%".format(acc))
+print("Restored model, mean absolute error: {:5.2f}%".format(mae))

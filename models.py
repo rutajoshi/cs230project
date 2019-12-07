@@ -155,5 +155,5 @@ class Models():
         preds = layers.Dense(10, activation='sigmoid', trainable=True)(preds)
 
         model = keras.Model(initial_model.input, preds)
-        model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
+        model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mae'])
         return model 
