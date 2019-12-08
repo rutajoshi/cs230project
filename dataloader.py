@@ -45,8 +45,8 @@ class DataLoader:
         while True:
             if (bins):
                 l = []
-                for i in range(10):
-                    l.append(labels[i][num : num + c.BATCH_SIZE])
+                for i in range(c.N_PROPS):
+                    l.append(labels[i][num : num + c.BATCH_SIZE, :])
                 yield l
             else:
                 yield labels[num: num + c.BATCH_SIZE, :]
@@ -91,7 +91,7 @@ class DataLoader:
     def __convert_onehot__(self, arr, binPower):
         # split into 10 and then convert to indices
         l = []
-        for i in range(10):   
+        for i in range(c.N_PROPS):   
             tmp = self.__convert_to_indices__(arr[:,i], binPower)
             tmp = self.__onehot_initialization__(tmp, binPower)
             l.append(tmp)
@@ -102,9 +102,13 @@ class DataLoader:
         labels = self.__get_labels__()
         if (bins):
             labels = self.__convert_onehot__(labels, c.BIN_POWER)
-        train_gen = self.__create_gen__("./data_split/train_data", labels[:c.TRAIN_SIZE], bins)
-        val_gen = self.__create_gen__("./data_split/val_data", labels[c.TRAIN_SIZE:c.TRAIN_SIZE + c.VAL_SIZE], bins)
-        test_gen = self.__create_gen__("./data_split/test_data", labels[c.TRAIN_SIZE + c.VAL_SIZE:], bins)
+            train_gen = self.__create_gen__("./data_split/train_data", [labels[i][:c.TRAIN_SIZE] for i in range(c.N_PROPS)], bins)
+            val_gen = self.__create_gen__("./data_split/val_data", [labels[i][c.TRAIN_SIZE:c.TRAIN_SIZE + c.VAL_SIZE] for i in range(c.N_PROPS)], bins)
+            test_gen = self.__create_gen__("./data_split/test_data", [labels[i][c.TRAIN_SIZE + c.VAL_SIZE:] for i in range(c.N_PROPS)], bins)
+        else:
+            train_gen = self.__create_gen__("./data_split/train_data", labels[:c.TRAIN_SIZE], bins)
+            val_gen = self.__create_gen__("./data_split/val_data", labels[c.TRAIN_SIZE:c.TRAIN_SIZE + c.VAL_SIZE], bins)
+            test_gen = self.__create_gen__("./data_split/test_data", labels[c.TRAIN_SIZE + c.VAL_SIZE:], bins)
         return train_gen, val_gen, test_gen
     
     
